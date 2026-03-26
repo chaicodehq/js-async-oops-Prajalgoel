@@ -77,29 +77,151 @@
 export class DabbaService {
   constructor(serviceName, area) {
     // Your code here
+    this.serviceName = serviceName;
+    this.area = area;
+    this.customers = [];
+    this._nextId = 1;
   }
 
   addCustomer(name, address, mealPreference) {
     // Your code here
+    if (
+      mealPreference !== "veg" &&
+      mealPreference !== "nonveg" &&
+      mealPreference !== "jain"
+    )
+      return null;
+
+    for (const customer of this.customers) {
+      if (customer.name == name) {
+        return null;
+      }
+    }
+
+    const customer = {
+      id: this._nextId,
+      name,
+      address,
+      mealPreference,
+      active: true,
+      delivered: false,
+    };
+
+    this.customers.push(customer);
+    this._nextId += 1
+
+    return customer;
   }
 
   removeCustomer(name) {
     // Your code here
+
+    for (const customer of this.customers) {
+      if (customer.name == name) {
+        if (customer.active == false) {
+          return false;
+        } else {
+          customer.active = false;
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   createDeliveryBatch() {
     // Your code here
-  }
+    const array = [];
 
+    for (const customer of this.customers) {
+      if (customer.active == true) {
+        const obj = {
+          customerId: customer.id,
+          name: customer.name,
+          address: customer.address,
+          mealPreference: customer.mealPreference,
+          batchTime: new Date().toISOString(),
+        };
+
+        array.push(obj);
+        customer.delivered = false;
+      }
+    }
+    return array;
+  }
   markDelivered(customerId) {
     // Your code here
+    for (const customer of this.customers) {
+      if (customer.id == customerId) {
+        if (customer.active == true && customer.delivered == false) {
+          customer.delivered = true;
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return false;
   }
 
   getDailyReport() {
     // Your code here
+    const report = {};
+
+    let activeCustomers = 0;
+    let delivered = 0;
+    let pending = 0;
+    let vegCount = 0;
+    let nonvegCount = 0;
+    let jainCount = 0;
+
+    for (const customer of this.customers) {
+      if (customer.active == true) {
+        activeCustomers += 1;
+
+        if (customer.mealPreference == "veg") {
+          vegCount += 1;
+        }
+
+        if (customer.mealPreference == "nonveg") {
+          nonvegCount += 1;
+        }
+
+        if (customer.mealPreference == "jain") {
+          jainCount += 1;
+        }
+      }
+
+      if (customer.active == true && customer.delivered == true) {
+        delivered += 1;
+      }
+
+      if (customer.active == true && customer.delivered == false) {
+        pending += 1;
+      }
+    }
+
+    report["totalCustomers"] = activeCustomers;
+    report["delivered"] = delivered;
+    report["pending"] = pending;
+    report["mealBreakdown"] = {
+      veg : vegCount,
+      nonveg : nonvegCount,
+      jain : jainCount,
+    };
+
+    return report
   }
 
   getCustomer(name) {
     // Your code here
+    for (const customer of this.customers) {
+      if(customer.name == name){
+        return customer
+      }
+    }
+    return null
   }
 }

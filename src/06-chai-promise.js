@@ -74,16 +74,99 @@
  */
 export function orderChai(type, quantity) {
   // Your code here
+  return new Promise((res, rej) => {
+
+    const prices = { cutting: 10, special: 20, ginger: 15, masala: 25 }
+
+    if (!["cutting", "special", "ginger", "masala"].includes(type)) {
+      return rej(new Error("Yeh chai available nahi hai!"))
+    }
+
+    if (quantity <= 0 || isNaN(quantity)) {
+      return rej(new Error("Kitni chai chahiye bhai?"))
+    }
+
+    setTimeout(() => {
+      return res({
+        type,
+        quantity,
+        total: quantity * prices[type]
+      })
+    }, 100)
+  })
 }
 
 export function checkIngredients(ingredient) {
   // Your code here
+  return new Promise((res, rej) => {
+    const ingredients = ["tea", "milk", "sugar", "ginger", "cardamom"]
+
+    if(ingredients.includes(ingredient)){
+      return res({
+        ingredient,
+        available: true
+      })
+    }
+
+    return rej(new Error(`${ingredient} khatam ho gaya!`))
+  })
 }
 
 export function prepareChaiWithTimeout(type, timeoutMs) {
-  // Your code here
+  // Your code here 
+  const timeoutPromise = new Promise((res, rej) => {
+    setTimeout(() => {
+      return rej(new Error('Bahut der ho gayi, chai nahi bani!'))
+    }, timeoutMs)
+  })
+
+  return Promise.race([orderChai(type, 1), timeoutPromise])
 }
 
-export function processChaiQueue(orders) {
+// series code
+// all promises will run one by one
+// export async function processChaiQueue(orders) {
+//   // Your code here
+//   const results = []
+
+//   for(const order of orders){
+//     try {
+//       const orderResult = await orderChai(order.type, order.quantity)
+//       results.push({
+//         status : 'fulfilled',
+//         value : orderResult
+//       })
+//     } catch (error) {
+//       results.push({
+//         status : 'rejected',
+//         reason : error.message
+//       })
+//     }
+//   }
+
+//   return results
+// }
+
+// parallel code
+// all promises will run side by side
+export async function processChaiQueue(orders) {
   // Your code here
+
+  const promises = orders.map(order => (
+    orderChai(order.type, order.quantity)
+    .then(response => (
+      {
+        status : 'fulfilled',
+        value : response
+      }
+    ))
+    .catch(err => (
+      {
+        status : 'rejected',
+        reason : err.message
+      }
+    ))
+  ))
+
+  return Promise.all(promises)
 }
